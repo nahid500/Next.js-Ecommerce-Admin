@@ -1,7 +1,7 @@
 'use client';
 
 import { SessionProvider, useSession, signIn } from "next-auth/react";
-import NavBar from "./components/NavBar"; // adjust path if needed
+import NavBar from "./components/Navbar";
 
 function AuthGate({ children }) {
   const { data: session, status } = useSession();

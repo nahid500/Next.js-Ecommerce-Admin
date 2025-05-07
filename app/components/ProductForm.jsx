@@ -7,14 +7,15 @@ export default function ProductForm(
         title: existingTitle,
         description: existingDescription,
         price: existingPrice,
-        images}) {
+        images: existingImages}) {
 
     const [title, setTitle] = useState(existingTitle || '')
     const [description, setDescription] = useState( existingDescription || '')
     const [price, setPrice] = useState( existingPrice || '')
-    const [loading, setLoading] = useState(false)  // To track loading state
-    const [error, setError] = useState('')         // To track error messages
-    const [success, setSuccess] = useState('')     // To track success messages
+    const [images, setImages] = useState(existingImages || []);
+    const [loading, setLoading] = useState(false) 
+    const [error, setError] = useState('')         
+    const [success, setSuccess] = useState('')     
 
     async function saveProduct(ev) {
         ev.preventDefault();
@@ -22,7 +23,7 @@ export default function ProductForm(
         setError('');
         setSuccess('');
     
-        const parsedPrice = parseFloat(price); // ✅ define first
+        const parsedPrice = parseFloat(price);
     
         if (isNaN(parsedPrice) || parsedPrice <= 0) {
             setError("Price must be a positive number.");
@@ -30,7 +31,7 @@ export default function ProductForm(
             return;
         }
     
-        const data = { title, description, price: parsedPrice }; // ✅ now use
+        const data = { title, description, price: parsedPrice }; 
     
         try {
             if (_id) {
@@ -52,30 +53,35 @@ export default function ProductForm(
     }
     async function uploadImages(ev) {
         const files = ev.target?.files;
+        if (files?.length > 0) {
+          const data = new FormData();
+          for (const file of files) {
+            data.append('file', file);
+          }
       
-        if (!files?.length) return;
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: data,
+          });
       
-        const data = new FormData();
-        for (let file of files) {
-          data.append('file', file);
-        }
+          const result = await res.json();
+          console.log(result);
+          
       
-        try {
-          const res = await axios.post('/api/upload', data);
-          console.log("Uploaded files:", res.data.urls);
-          // You can optionally update state with these URLs
-        } catch (err) {
-          console.error("Upload failed:", err);
+          if (result.url) {
+            setImages(prev => [...prev, result.url]);
+          }
         }
       }
+      
       
 
     return (
         <form onSubmit={saveProduct} className="flex flex-col space-y-4 m-3">
 
 
-            {error && <div className="text-red-500 mb-2">{error}</div>} {/* Display error */}
-            {success && <div className="text-green-500 mb-2">{success}</div>} {/* Display success */}
+            {error && <div className="text-red-500 mb-2">{error}</div>}
+            {success && <div className="text-green-500 mb-2">{success}</div>}
 
             <label className="text-blue-900 text-xl">Product Name</label>
             <input 
@@ -86,8 +92,9 @@ export default function ProductForm(
                 onChange={ev => setTitle(ev.target.value)} 
                 required
             />
-            <label className="text-blue-900 text-xl">Photos
 
+            <label className="text-blue-900 text-xl">
+                Photos
             </label>
             <div className="mb-2">
                 <label className="w-24 h-24 border text-center flex g-1 text-gray-500 rounded-md bg-gray-200 items-center justify-center">
@@ -95,18 +102,15 @@ export default function ProductForm(
                 <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06l-3.22-3.22V16.5a.75.75 0 0 1-1.5 0V4.81L8.03 8.03a.75.75 0 0 1-1.06-1.06l4.5-4.5ZM3 15.75a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
                 </svg>
 
-            <div>
-                Upload
-            </div>
+                <div>
+                    Upload
+                </div>
 
-            <input type="file" onChange={uploadImages} className="hidden"></input>
-
-
+                <input type="file" onChange={uploadImages} className="hidden"></input>
                 </label>
 
-
                 {!images?.length && (
-                    <div> No photos available for this prodduct </div>
+                    <div> No photos available for this product </div>
                 )}
             </div>
 

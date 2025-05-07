@@ -1,37 +1,32 @@
-import { NextResponse } from "next/server";
-import formidable from "formidable";
-import fs from "fs";
+import { v2 as cloudinary } from 'cloudinary';
+import { NextResponse } from 'next/server';
 
-// Disable Next.js's default body parser
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-const uploadDir = "./public/uploads";
-
-// Make sure the upload directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
-  const form = formidable({
-    multiples: true,
-    uploadDir,
-    keepExtensions: true,
-  });
+  const formData = await req.formData();
+  const file = formData.get('file');
 
-  const data = await new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) return reject(err);
-      resolve({ fields, files });
+  if (!file) {
+    return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ folder: 'admin-products' }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      }).end(buffer);
     });
-  });
 
-  const uploadedFiles = Array.isArray(data.files.file) ? data.files.file : [data.files.file];
-  const fileUrls = uploadedFiles.map((file) => `/uploads/${file.newFilename}`);
-
-  return NextResponse.json({ urls: fileUrls });
+    return NextResponse.json({ url: result.secure_url });
+  } catch (err) {
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
 }
