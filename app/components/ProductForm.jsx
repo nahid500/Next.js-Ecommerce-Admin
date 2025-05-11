@@ -1,6 +1,8 @@
 'use client'
 import axios from "axios"
 import { useState } from "react"
+import Spinner from "./Spinner"
+import { ReactSortable } from "react-sortablejs"
 
 export default function ProductForm(
     {   _id,
@@ -14,8 +16,10 @@ export default function ProductForm(
     const [price, setPrice] = useState( existingPrice || '')
     const [images, setImages] = useState(existingImages || []);
     const [loading, setLoading] = useState(false) 
+    const [isUploading, setisUpLoading] = useState(false) 
     const [error, setError] = useState('')         
-    const [success, setSuccess] = useState('')     
+    const [success, setSuccess] = useState('')   
+
 
     async function saveProduct(ev) {
         ev.preventDefault();
@@ -31,7 +35,7 @@ export default function ProductForm(
             return;
         }
     
-        const data = { title, description, price: parsedPrice }; 
+        const data = { title, description, price: parsedPrice, images }; 
     
         try {
             if (_id) {
@@ -54,6 +58,7 @@ export default function ProductForm(
     async function uploadImages(ev) {
         const files = ev.target?.files;
         if (files?.length > 0) {
+            setisUpLoading(true)
           const data = new FormData();
           for (const file of files) {
             data.append('file', file);
@@ -65,16 +70,20 @@ export default function ProductForm(
           });
       
           const result = await res.json();
-          console.log(result);
-          
+        //   console.log(result);
       
           if (result.url) {
             setImages(prev => [...prev, result.url]);
           }
+          setisUpLoading(false)
+
         }
       }
       
-      
+      function updateImagesOrder(){
+        console.log(arguments);
+        
+      }
 
     return (
         <form onSubmit={saveProduct} className="flex flex-col space-y-4 m-3">
@@ -96,7 +105,22 @@ export default function ProductForm(
             <label className="text-blue-900 text-xl">
                 Photos
             </label>
-            <div className="mb-2">
+            <div className="mb-2 flex flex-wrap gap-2">
+                
+                <ReactSortable list={images} setList={updateImagesOrder} className="flex flex-wrap">
+
+                {!!images?.length && images.map(link => (
+                    <div key={link} className="h-24">
+                        <img src={link} alt="" className="rounded-lg"/>
+                    </div>
+                ))}
+                </ReactSortable>
+
+                {isUploading && (
+                    <div className="h-24 flex items-center">
+                        <Spinner/>
+                    </div>
+                )}
                 <label className="w-24 h-24 border text-center flex g-1 text-gray-500 rounded-md bg-gray-200 items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
                 <path fillRule="evenodd" d="M11.47 2.47a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06l-3.22-3.22V16.5a.75.75 0 0 1-1.5 0V4.81L8.03 8.03a.75.75 0 0 1-1.06-1.06l4.5-4.5ZM3 15.75a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />

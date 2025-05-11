@@ -30,13 +30,13 @@ export async function POST(req) {
     await mongooseConnect();
 
     try {
-        const { title, description, price } = await req.json();
+        const { title, description, price, images} = await req.json();
 
         if (typeof price !== 'number' || price <= 0) {
             return NextResponse.json({ error: "Price must be a positive number." }, { status: 400 });
         }
 
-        const product = await Product.create({ title, description, price });
+        const product = await Product.create({ title, description, price, images });
         return NextResponse.json(product, { status: 201 });
     } catch (error) {
         console.error("Error creating product:", error.stack);
@@ -55,11 +55,11 @@ export async function PUT(req) {
     }
 
     try {
-        const { title, description, price } = await req.json();
+        const { title, description, price, images } = await req.json();
 
         const updated = await Product.findByIdAndUpdate(
             id,
-            { title, description, price },
+            { title, description, price, images },
             { new: true }
         );
 

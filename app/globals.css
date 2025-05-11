@@ -14,3 +14,7 @@ table.basic thead tr td{
 table.basic tr td{
     @apply border border-blue-300 p-1 ;
 }
+
+img{
+    max-height: 100%;
+}
